@@ -1,35 +1,85 @@
-<main class="card">
-  <h1>Task Manager</h1>
-  <p class="sub">Angular + TypeScript | {{ doneCount() }} / {{ totalCount() }} done</p>
+<div class="app" [class.dark]="dark()">
+  <main class="card">
+    <header class="top">
+      <div>
+        <h1>Task Manager</h1>
+        <p class="sub">Built with Angular &amp; TypeScript</p>
+      </div>
+      <button class="theme" (click)="toggleTheme()" [attr.aria-label]="dark() ? 'Switch to light mode' : 'Switch to dark mode'">
+        {{ dark() ? '☀️' : '🌙' }}
+      </button>
+    </header>
 
-  <div class="row">
-    <input [(ngModel)]="newTitle" (keyup.enter)="addTask()" placeholder="Naya task likhein..." />
-    <button class="primary" (click)="addTask()">Add</button>
-  </div>
+    <section class="stats">
+      <div class="stat"><strong>{{ totalCount() }}</strong><span>Total</span></div>
+      <div class="stat"><strong>{{ activeCount() }}</strong><span>Active</span></div>
+      <div class="stat"><strong>{{ doneCount() }}</strong><span>Done</span></div>
+    </section>
 
-  <input class="search" [(ngModel)]="search" placeholder="Search tasks..." />
+    <div class="progress" role="progressbar" [attr.aria-valuenow]="progress()" aria-valuemin="0" aria-valuemax="100">
+      <div class="bar" [style.width.%]="progress()"></div>
+    </div>
+    <p class="progress-label">{{ progress() }}% completed</p>
 
-  <div class="filters">
-    @for (f of ['all', 'active', 'done']; track f) {
-      <button [class.active]="filter() === f" (click)="filter.set($any(f))">{{ f }}</button>
-    }
-  </div>
+    <div class="add">
+      <input
+        class="text"
+        [ngModel]="newTitle()"
+        (ngModelChange)="newTitle.set($event)"
+        (keyup.enter)="addTask()"
+        placeholder="Add a new task..."
+      />
+      <select [ngModel]="newPriority()" (ngModelChange)="newPriority.set($event)" aria-label="Priority">
+        @for (p of priorities; track p) {
+          <option [value]="p">{{ p }}</option>
+        }
+      </select>
+      <button class="primary" (click)="addTask()">Add</button>
+    </div>
 
-  @if (service.loading()) {
-    <p class="msg">Loading...</p>
-  } @else if (service.error()) {
-    <p class="msg error">{{ service.error() }}</p>
-  } @else {
-    <ul>
-      @for (t of visibleTasks(); track t.id) {
-        <app-task-item
-          [task]="t"
-          (toggle)="service.toggle($event)"
-          (remove)="service.remove($event)"
-        />
-      } @empty {
-        <p class="msg">Koi task nahi mila.</p>
+    <input
+      class="search"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+      placeholder="🔍 Search tasks..."
+    />
+
+    <div class="filters">
+      @for (f of filters; track f) {
+        <button [class.active]="filter() === f" (click)="filter.set(f)">
+          {{ f }} <span class="count">{{ countFor(f) }}</span>
+        </button>
       }
-    </ul>
-  }
-</main>
+    </div>
+
+    @if (service.loading()) {
+      <p class="msg">Loading tasks...</p>
+    } @else {
+      @if (service.error()) {
+        <p class="msg error">{{ service.error() }}</p>
+      }
+      <ul>
+        @for (t of visibleTasks(); track t.id) {
+          <app-task-item
+            [task]="t"
+            (toggle)="service.toggle($event)"
+            (remove)="service.remove($event)"
+          />
+        } @empty {
+          <div class="empty">
+            <div class="emoji">📝</div>
+            <p>No tasks here yet.</p>
+          </div>
+        }
+      </ul>
+    }
+
+    <footer class="foot">
+      <span>{{ activeCount() }} task(s) left</span>
+      <span class="actions">
+        <button class="link" (click)="service.fetchFromApi()">Reload from API</button>
+        <button class="link" (click)="service.clearCompleted()" [disabled]="doneCount() === 0">Clear completed</button>
+      </span>
+    </footer>
+  </main>
+</div>
