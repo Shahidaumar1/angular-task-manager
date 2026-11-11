@@ -1,0 +1,35 @@
+<main class="card">
+  <h1>Task Manager</h1>
+  <p class="sub">Angular + TypeScript | {{ doneCount() }} / {{ totalCount() }} done</p>
+
+  <div class="row">
+    <input [(ngModel)]="newTitle" (keyup.enter)="addTask()" placeholder="Naya task likhein..." />
+    <button class="primary" (click)="addTask()">Add</button>
+  </div>
+
+  <input class="search" [(ngModel)]="search" placeholder="Search tasks..." />
+
+  <div class="filters">
+    @for (f of ['all', 'active', 'done']; track f) {
+      <button [class.active]="filter() === f" (click)="filter.set($any(f))">{{ f }}</button>
+    }
+  </div>
+
+  @if (service.loading()) {
+    <p class="msg">Loading...</p>
+  } @else if (service.error()) {
+    <p class="msg error">{{ service.error() }}</p>
+  } @else {
+    <ul>
+      @for (t of visibleTasks(); track t.id) {
+        <app-task-item
+          [task]="t"
+          (toggle)="service.toggle($event)"
+          (remove)="service.remove($event)"
+        />
+      } @empty {
+        <p class="msg">Koi task nahi mila.</p>
+      }
+    </ul>
+  }
+</main>
